@@ -314,6 +314,26 @@ private void SetBodyPartsParent(chest chestPart)
     chestPart.shoulderL.hand.forearm.transform.SetParent(bodyPartsParent.transform, false);
 }
 
+public Transform GetTransformByName(string name)
+{
+    switch (name)
+    {
+        case "hmd":
+            return this.hmd;
+        case "conR":
+            return this.conR;
+        case "conL":
+            return this.conL;
+        case "kneeConR":
+            return this.kneeConR;
+        case "kneeConL":
+            return this.kneeConL;
+        // Add cases for any other transforms you wish to reference by name
+        default:
+            Debug.LogWarning("Transform name not recognized: " + name);
+            return null;
+    }
+}
 
     // Method to calibrate the player's body parts
     public void Calibrate()
