@@ -279,6 +279,27 @@ public class player
         InitializeBodyPartsParent(); 
         playerTorso = new Torso("playerTorso", Hmd, Chest.bp.transform, Hip.bp.transform, bodyPartsParent);
     }
+    public player()
+    {
+          
+        GameObject hmd = new GameObject("HMD");      
+        Transform conR = new GameObject("fakeconR").transform;  
+        Transform conL = new GameObject("fakeconL").transform;  
+        Transform kneeConR = new GameObject("fakekneeConR").transform;  
+        Transform kneeConL = new GameObject("fakekneeCon").transform; 
+        GameObject fakeparent = new GameObject("fakeparent");
+        Chest = new chest("chest", hmd.transform, conR, conL);
+        Hip = new chest("hip", hmd.transform, kneeConR, kneeConL);
+        Hip.biasCounter = 1;
+        Hip.shoulderR.elbow.radius = .35f;
+        Hip.shoulderL.elbow.radius = .35f;
+        Hip.shoulderR.radius = .1f; 
+        Hip.shoulderL.radius = .1f;
+        Hip.shoulderR.hand.radius = .35f; 
+        Hip.shoulderL.hand.radius = .35f;
+        //InitializeBodyPartsParent(); 
+        playerTorso = new Torso("playerTorso", hmd.transform, Chest.bp.transform, Hip.bp.transform, fakeparent);
+    }
     private void InitializeBodyPartsParent()
 {
     bodyPartsParent = new GameObject("BodyPartsParent");

@@ -4,9 +4,9 @@ using System.IO;
 
 public class Recorder : MonoBehaviour
 {
-    private player PlayerToRecord;
+    public player PlayerToRecord;
     private MirroredPlayer mirroredPlayer;
-    private Record currentRecord;
+    public Record currentRecord;
     private delegate void UpdateDelegate();
     private UpdateDelegate currentUpdate;
     private string saveFilePath;
