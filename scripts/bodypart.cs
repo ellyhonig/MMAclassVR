@@ -254,6 +254,7 @@ public class player
     public chest Chest;
     public chest Hip;
     public Torso playerTorso;
+    public Dictionary<string, GameObject> bodyPartsDictionary;
 
     public delegate void UpdateDelegate();
     public UpdateDelegate currentUpdate;
@@ -275,114 +276,94 @@ public class player
         Hip.shoulderL.radius = .1f;
         Hip.shoulderR.hand.radius = .35f; 
         Hip.shoulderL.hand.radius = .35f;
-        currentUpdate = PreCalibrationUpdate;
-        InitializeBodyPartsParent(); 
+        currentUpdate = PreCalibrationUpdate; 
+        bodyPartsParent = new GameObject("BodyPartsParent");
         playerTorso = new Torso("playerTorso", Hmd, Chest.bp.transform, Hip.bp.transform, bodyPartsParent);
-    }
-    public player()
-    {
-          
-        GameObject hmd = new GameObject("HMD");      
-        Transform conR = new GameObject("fakeconR").transform;  
-        Transform conL = new GameObject("fakeconL").transform;  
-        Transform kneeConR = new GameObject("fakekneeConR").transform;  
-        Transform kneeConL = new GameObject("fakekneeCon").transform; 
-        GameObject fakeparent = new GameObject("fakeparent");
-        Chest = new chest("chest", hmd.transform, conR, conL);
-        Hip = new chest("hip", hmd.transform, kneeConR, kneeConL);
-        Hip.biasCounter = 1;
-        Hip.shoulderR.elbow.radius = .35f;
-        Hip.shoulderL.elbow.radius = .35f;
-        Hip.shoulderR.radius = .1f; 
-        Hip.shoulderL.radius = .1f;
-        Hip.shoulderR.hand.radius = .35f; 
-        Hip.shoulderL.hand.radius = .35f;
-        //InitializeBodyPartsParent(); 
-        playerTorso = new Torso("playerTorso", hmd.transform, Chest.bp.transform, Hip.bp.transform, fakeparent);
+        bodyPartsDictionary = new Dictionary<string, GameObject>();
+        PopulateBodyPartsDictionary();
+        InitializeBodyPartsParent();
+
     }
     private void InitializeBodyPartsParent()
-{
-    bodyPartsParent = new GameObject("BodyPartsParent");
-
-
-    // Set parent for HMD and controllers
-    hmd.SetParent(bodyPartsParent.transform, false);
-    conR.SetParent(bodyPartsParent.transform, false);
-    conL.SetParent(bodyPartsParent.transform, false);
-    kneeConR.SetParent(bodyPartsParent.transform, false);
-    kneeConL.SetParent(bodyPartsParent.transform, false);
-
-    // Set parent for chest and hip, including all child objects
-    SetBodyPartsParent(Chest);
-    SetBodyPartsParent(Hip);
-}
-
-private void SetBodyPartsParent(chest chestPart)
-{
-    chestPart.bp.transform.SetParent(bodyPartsParent.transform, false);
-    chestPart.shoulderR.bp.transform.SetParent(bodyPartsParent.transform, false);
-    chestPart.shoulderL.bp.transform.SetParent(bodyPartsParent.transform, false);
-
-    // Set parents for elbows and hands, including cylinders like tricep and forearm
-    chestPart.shoulderR.elbow.bp.transform.SetParent(bodyPartsParent.transform, false);
-    chestPart.shoulderR.elbow.tricep.transform.SetParent(bodyPartsParent.transform, false);
-    chestPart.shoulderR.hand.bp.transform.SetParent(bodyPartsParent.transform, false);
-    chestPart.shoulderR.hand.forearm.transform.SetParent(bodyPartsParent.transform, false);
-
-    chestPart.shoulderL.elbow.bp.transform.SetParent(bodyPartsParent.transform, false);
-    chestPart.shoulderL.elbow.tricep.transform.SetParent(bodyPartsParent.transform, false);
-    chestPart.shoulderL.hand.bp.transform.SetParent(bodyPartsParent.transform, false);
-    chestPart.shoulderL.hand.forearm.transform.SetParent(bodyPartsParent.transform, false);
-}
-
-public Transform GetTransformByName(string name)
-{
-    // Directly handle cases without prefix
-    switch (name)
     {
-        case "HMD": return hmd.transform;
-        case "Chest": return Chest.bp.transform;
-        case "Hip": return Hip.bp.transform;
-        case "Torso": return playerTorso.upperTorso.transform;
+        
+
+        // Set parent for HMD and controllers directly
+        hmd.SetParent(bodyPartsParent.transform, false);
+        conR.SetParent(bodyPartsParent.transform, false);
+        conL.SetParent(bodyPartsParent.transform, false);
+        kneeConR.SetParent(bodyPartsParent.transform, false);
+        kneeConL.SetParent(bodyPartsParent.transform, false);
+
+        // Now set the parent for all body parts stored in the dictionary
+        foreach (var bodyPart in bodyPartsDictionary.Values)
+        {
+            bodyPart.transform.SetParent(bodyPartsParent.transform, false);
+        }
     }
 
-    // Handle names with prefixes
-    chest targetChest = name.StartsWith("Chest") ? Chest : Hip;
-    string cleanName = name.Replace("Chest", "").Replace("Hip", "");
-    return cleanName switch
+    private void PopulateBodyPartsDictionary()
     {
-        "ShoulderR" => targetChest.shoulderR.bp.transform,
-        "ShoulderL" => targetChest.shoulderL.bp.transform,
-        "ElbowR" => targetChest.shoulderR.elbow.bp.transform,
-        "ElbowL" => targetChest.shoulderL.elbow.bp.transform,
-        "HandR" => targetChest.shoulderR.hand.bp.transform,
-        "HandL" => targetChest.shoulderL.hand.bp.transform,
-        "TricepR" => targetChest.shoulderR.elbow.tricep.transform,
-        "ForearmR" => targetChest.shoulderR.hand.forearm.transform,
-        "TricepL" => targetChest.shoulderL.elbow.tricep.transform,
-        "ForearmL" => targetChest.shoulderL.hand.forearm.transform,
-        _ => null,
-    } ?? throw new ArgumentException($"Transform name not recognized: {name}");
-}
+        // Main body parts
+        bodyPartsDictionary.Add("HMD", hmd.gameObject);
+        bodyPartsDictionary.Add("Chest", Chest.bp);
+        bodyPartsDictionary.Add("Hip", Hip.bp);
+    bodyPartsDictionary.Add("UpperTorso", playerTorso.upperTorso); // Added upper torso
+    bodyPartsDictionary.Add("LowerTorso", playerTorso.lowerTorso); 
+        // Chest body parts
+        AddBodyPartToDictionary(Chest, "Chest");
+
+        // Hip body parts
+        AddBodyPartToDictionary(Hip, "Hip");
+    }
+
+    // Helper method to add body parts to the dictionary with a prefix, now mapping to GameObjects
+    private void AddBodyPartToDictionary(chest chestPart, string prefix)
+    {
+        bodyPartsDictionary.Add(prefix + "ShoulderR", chestPart.shoulderR.bp);
+        bodyPartsDictionary.Add(prefix + "ShoulderL", chestPart.shoulderL.bp);
+        bodyPartsDictionary.Add(prefix + "ElbowR", chestPart.shoulderR.elbow.bp);
+        bodyPartsDictionary.Add(prefix + "ElbowL", chestPart.shoulderL.elbow.bp);
+        bodyPartsDictionary.Add(prefix + "HandR", chestPart.shoulderR.hand.bp);
+        bodyPartsDictionary.Add(prefix + "HandL", chestPart.shoulderL.hand.bp);
+        bodyPartsDictionary.Add(prefix + "TricepR", chestPart.shoulderR.elbow.tricep);
+        bodyPartsDictionary.Add(prefix + "TricepL", chestPart.shoulderL.elbow.tricep);
+        bodyPartsDictionary.Add(prefix + "ForearmR", chestPart.shoulderR.hand.forearm);
+        bodyPartsDictionary.Add(prefix + "ForearmL", chestPart.shoulderL.hand.forearm);
+    }
+
+    public Transform GetTransformByName(string name)
+    {
+        // Attempt to get the GameObject from the dictionary using the provided name
+        if (bodyPartsDictionary.TryGetValue(name, out GameObject bodyPart))
+        {
+            // If found, return the transform of the GameObject
+            return bodyPart.transform;
+        }
+
+        // If the body part name was not found in the dictionary, throw an exception
+        throw new ArgumentException($"Transform name not recognized: {name}");
+    }
+
 
 
 
     // Method to calibrate the player's body parts
     public void Calibrate()
-{
-   // Calibration for upper body
-    Chest.shoulderR.hand.Calibrate();
-    Chest.shoulderL.hand.Calibrate();
-    Chest.shoulderR.elbow.hand = Chest.shoulderR.hand.bp.transform;
-    Chest.shoulderL.elbow.hand = Chest.shoulderL.hand.bp.transform;
+    {
+    // Calibration for upper body
+        Chest.shoulderR.hand.Calibrate();
+        Chest.shoulderL.hand.Calibrate();
+        Chest.shoulderR.elbow.hand = Chest.shoulderR.hand.bp.transform;
+        Chest.shoulderL.elbow.hand = Chest.shoulderL.hand.bp.transform;
 
-    // Calibration for lower body
-    Hip.shoulderR.hand.Calibrate();
-    Hip.shoulderL.hand.Calibrate();
-    Hip.shoulderR.elbow.hand = Chest.shoulderR.hand.bp.transform;
-    Hip.shoulderL.elbow.hand = Chest.shoulderL.hand.bp.transform;
-    currentUpdate = PostCalibrationUpdate;
-}
+        // Calibration for lower body
+        Hip.shoulderR.hand.Calibrate();
+        Hip.shoulderL.hand.Calibrate();
+        Hip.shoulderR.elbow.hand = Chest.shoulderR.hand.bp.transform;
+        Hip.shoulderL.elbow.hand = Chest.shoulderL.hand.bp.transform;
+        currentUpdate = PostCalibrationUpdate;
+    }
 
 
     // Update methods for before and after calibration
@@ -407,7 +388,10 @@ public Transform GetTransformByName(string name)
         playerTorso.updater();
         currentUpdate();
     }
-
+    public void legCorrecter()
+    {
+        
+    }
     // Check if the player is looking up
     public bool isLookingUp()
     {
