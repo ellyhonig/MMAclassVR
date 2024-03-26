@@ -60,7 +60,7 @@ public class Recorder : MonoBehaviour
     {
         if (currentRecord.currentFrame >= currentRecord.frames.Count)
         {
-            PauseRecording();
+            PlayRecording();//to reset current frame to 0
             return;
         }
 
@@ -95,37 +95,21 @@ public class Frame
 {
     // Clear existing data
     data.Clear();
-if (playerToCapture == null) Debug.LogError("playerToCapture is null");
-if (playerToCapture.hmd == null) Debug.LogError("playerToCapture.hmd is null");
-if (data == null) Debug.LogError("data is null");
-    // Capture the main body parts as well as the torso
-    data.Add(new FrameData("HMD", playerToCapture.hmd.localPosition, playerToCapture.hmd.localRotation));
-    data.Add(new FrameData("Chest", playerToCapture.Chest.bp.transform.localPosition, playerToCapture.Chest.bp.transform.localRotation));
-    data.Add(new FrameData("Hip", playerToCapture.Hip.bp.transform.localPosition, playerToCapture.Hip.bp.transform.localRotation));
-    data.Add(new FrameData("Torso", playerToCapture.playerTorso.upperTorso.transform.localPosition, playerToCapture.playerTorso.upperTorso.transform.localRotation));
-    
-    // Capture shoulders, elbows, and hands for both chest and hips
-    CaptureLimbData(playerToCapture.Chest, "Chest");
-    CaptureLimbData(playerToCapture.Hip, "Hip");
+
+    if (playerToCapture == null) 
+    {
+        Debug.LogError("playerToCapture is null");
+        return;
+    }
+
+    // Automatically capture data for all body parts in the dictionary
+    foreach (var item in playerToCapture.bodyPartsDictionary)
+    {
+        Transform partTransform = item.Value.transform; // Access the transform of the GameObject
+        data.Add(new FrameData(item.Key, partTransform.localPosition, partTransform.localRotation));
+    }
 }
-private void CaptureLimbData(chest chestPart, string prefix)
-{
-    // Existing captures
-    data.Add(new FrameData(prefix + "ShoulderR", chestPart.shoulderR.bp.transform.localPosition, chestPart.shoulderR.bp.transform.localRotation));
-    data.Add(new FrameData(prefix + "ShoulderL", chestPart.shoulderL.bp.transform.localPosition, chestPart.shoulderL.bp.transform.localRotation));
-    data.Add(new FrameData(prefix + "ElbowR", chestPart.shoulderR.elbow.bp.transform.localPosition, chestPart.shoulderR.elbow.bp.transform.localRotation));
-    data.Add(new FrameData(prefix + "ElbowL", chestPart.shoulderL.elbow.bp.transform.localPosition, chestPart.shoulderL.elbow.bp.transform.localRotation));
-    data.Add(new FrameData(prefix + "HandR", chestPart.shoulderR.hand.bp.transform.position, chestPart.shoulderR.hand.bp.transform.localRotation));
-    data.Add(new FrameData(prefix + "HandL", chestPart.shoulderL.hand.bp.transform.position, chestPart.shoulderL.hand.bp.transform.localRotation));
 
-        // Assuming each tricep and forearm has a direct Transform reference in your structure
-    data.Add(new FrameData(prefix + "TricepR", chestPart.shoulderR.elbow.tricep.transform.localPosition, chestPart.shoulderR.elbow.tricep.transform.localRotation));
-    data.Add(new FrameData(prefix + "TricepL", chestPart.shoulderL.elbow.tricep.transform.localPosition, chestPart.shoulderL.elbow.tricep.transform.localRotation));
-
-    data.Add(new FrameData(prefix + "ForearmR", chestPart.shoulderR.hand.forearm.transform.localPosition, chestPart.shoulderR.hand.forearm.transform.localRotation));
-    data.Add(new FrameData(prefix + "ForearmL", chestPart.shoulderL.hand.forearm.transform.localPosition, chestPart.shoulderL.hand.forearm.transform.localRotation));
-
-}
 
     public void ApplyToPlayer(player playerToApply)
     {
