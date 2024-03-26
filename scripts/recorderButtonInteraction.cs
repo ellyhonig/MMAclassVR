@@ -37,12 +37,14 @@ public class recorderButtonInteraction : MonoBehaviour
                 break;
             case "PauseButton":
                 recorder.PauseRecording();
+                keyPointSpawner.Pause();
                 break;
             case "RecordButton":
                 recorder.StartRecording();
                 break;
             case "spawn trace": // New case for handling "spawn trace" button interactions
-                keyPointSpawner.SpawnBasicTrace();
+                keyPointSpawner.addKeyFrame();
+                recorder.PauseRecording();
                 break;
         }
     }
