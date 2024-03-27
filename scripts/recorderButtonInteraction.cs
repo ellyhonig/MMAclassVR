@@ -46,6 +46,10 @@ public class recorderButtonInteraction : MonoBehaviour
                 keyPointSpawner.addKeyFrame();
                 recorder.PauseRecording();
                 break;
+            case "test trace":
+                   keyPointSpawner.Pause();
+                   keyPointSpawner.traceChecker.startTestTrace();
+                   break;
         }
     }
 
