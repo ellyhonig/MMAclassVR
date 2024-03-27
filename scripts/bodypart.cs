@@ -62,6 +62,7 @@ public class chest : bodypart
 {
     public shoulder shoulderR;
     public shoulder shoulderL;
+    
     public int biasCounter = 3;
     
 
@@ -226,6 +227,8 @@ public class Torso : bodypart
         // Make the cylinders children of the parent object
         upperTorso.transform.SetParent(parentObject.transform, false);
         lowerTorso.transform.SetParent(parentObject.transform, false);
+        upperTorso.transform.localScale = new Vector3(0,0,0);
+        lowerTorso.transform.localScale = new Vector3(0,0,0);
     }
     public void resize()
     {
@@ -305,11 +308,11 @@ public class player
     private void PopulateBodyPartsDictionary()
     {
         // Main body parts
-        bodyPartsDictionary.Add("HMD", hmd.gameObject);
+        //bodyPartsDictionary.Add("HMD", hmd.gameObject);
         bodyPartsDictionary.Add("Chest", Chest.bp);
         bodyPartsDictionary.Add("Hip", Hip.bp);
-    bodyPartsDictionary.Add("UpperTorso", playerTorso.upperTorso); // Added upper torso
-    bodyPartsDictionary.Add("LowerTorso", playerTorso.lowerTorso); 
+    //bodyPartsDictionary.Add("UpperTorso", playerTorso.upperTorso); // Added upper torso
+    //bodyPartsDictionary.Add("LowerTorso", playerTorso.lowerTorso); 
         // Chest body parts
         AddBodyPartToDictionary(Chest, "Chest");
 
