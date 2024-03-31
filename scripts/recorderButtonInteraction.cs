@@ -50,6 +50,12 @@ public class recorderButtonInteraction : MonoBehaviour
                    keyPointSpawner.Pause();
                    keyPointSpawner.traceChecker.startTestTrace();
                    break;
+            case "play level":
+                    keyPointSpawner.levelEditor.PlayLevel();  
+                    break;  
+            case "add section":
+                    keyPointSpawner.levelEditor.AddSection();      
+                    break;      
         }
     }
 

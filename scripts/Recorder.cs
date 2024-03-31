@@ -7,8 +7,8 @@ public class Recorder : MonoBehaviour
     public player PlayerToRecord;
     private MirroredPlayer mirroredPlayer;
     public Record currentRecord;
-    private delegate void UpdateDelegate();
-    private UpdateDelegate currentUpdate;
+    public delegate void UpdateDelegate();
+    public UpdateDelegate currentUpdate;
     private string saveFilePath;
 
     void Start()

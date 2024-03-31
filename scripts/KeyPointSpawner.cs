@@ -16,20 +16,25 @@ public class KeyPointSpawner : MonoBehaviour
     public int currentlySelectedKeyFrame;
     public TraceChecker traceChecker;
     public bool rewind = false;
+    public Level currentLevel;
+    public LevelEditor levelEditor;
 
-     void Start()
+void Start()
+{
+    recorder = GetComponent<Recorder>();
+    keyFrameList = new List<KeyFrame>();
+    if (recorder == null)
     {
-            recorder = GetComponent<Recorder>();
-            keyFrameList = new List<KeyFrame>();
-            if (recorder == null)
-            {
-                Debug.LogError("Recorder component not found on the same GameObject.");
-            }
-            traceChecker = new TraceChecker(this);
+        Debug.LogError("Recorder component not found on the same GameObject.");
     }
+    traceChecker = new TraceChecker(this);
+    currentLevel = new Level();
+    levelEditor = new LevelEditor(this);
+}
 
     private float updateRate = 0.01f; // Run 10x per second
     private float nextUpdateTime = 0f;
+
 
 void Update()
 {
@@ -75,6 +80,7 @@ void Update()
         currentUpdate = null;
     }
     
+    
 
     
 public class KeyFrame
@@ -87,9 +93,25 @@ public class KeyFrame
     {
         spawner = Spawner;
         keyFramePlayer = new player(spawner.hmd.transform, spawner.conR.transform, spawner.conL.transform, spawner.kneeConR.transform, spawner.kneeConL.transform);
-
+        MakePlayerGreen(keyFramePlayer);
        // keyFramePlayer.Calibrate();
     }
+    public void MakePlayerGreen(player playerToModify)
+{
+    foreach (GameObject bodyPart in playerToModify.bodyPartsDictionary.Values)
+    {
+        Renderer renderer = bodyPart.GetComponent<Renderer>();
+        if (renderer != null)
+        {
+            Color currentColor = renderer.material.color;
+            // Change the color to green while preserving the current alpha (transparency) value
+            renderer.material.color = new Color(0f, 1f, 0f, .1f);
+        }
+    }
+}
+
+
+
 }
 }
 
@@ -112,12 +134,29 @@ public class TraceChecker
 
     public void testTrace()
     {
-        if (currentKeyFrame >= spawner.keyFrameList.Count)
+         if (currentKeyFrame >= spawner.keyFrameList.Count)
+    {
+        // Check if there are more sections left in the level to test
+        if (spawner.levelEditor.currentSection + 1 < spawner.currentLevel.keyframeIndicesSections.Count)
         {
-            //Debug.Log("Finished testing all keyframes.");
-            spawner.Pause(); // Stop the update loop
-            return;
+            // Move to the next section
+            spawner.levelEditor.switchToNextSection();
+
+            // Reset the keyframe counter for the new section
+            currentKeyFrame = 0;
+
+            // Start testing the next section
+            startTestTrace();
         }
+        else
+        {
+            // No more sections left in the level, stop the update loop
+            Debug.Log("Finished testing all sections of the level.");
+            spawner.Pause();
+            spawner.recorder.PauseRecording();
+        }
+        return;
+    }
 
         // Perform the limb check
         if (CheckAllLimbsAtKeyPoint(currentKeyFrame))
