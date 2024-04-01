@@ -8,9 +8,9 @@ public class KeyPointSpawner : MonoBehaviour
     public GameObject conL;
     public GameObject kneeConR;
     public GameObject kneeConL;
-    private delegate void UpdateDelegate();
+    public delegate void UpdateDelegate();
     public Recorder recorder; // Assigned in Unity Editor; the recorder holding the recording
-    private UpdateDelegate currentUpdate;
+    public UpdateDelegate currentUpdate;
     public List<KeyFrame> keyFrameList;
     public int publicIndex;
     public int currentlySelectedKeyFrame;
@@ -93,7 +93,7 @@ public class KeyFrame
     {
         spawner = Spawner;
         keyFramePlayer = new player(spawner.hmd.transform, spawner.conR.transform, spawner.conL.transform, spawner.kneeConR.transform, spawner.kneeConL.transform);
-        MakePlayerGreen(keyFramePlayer);
+        //MakePlayerGreen(keyFramePlayer);
        // keyFramePlayer.Calibrate();
     }
     public void MakePlayerGreen(player playerToModify)
@@ -133,17 +133,22 @@ public class TraceChecker
     }
 
     public void testTrace()
-    {
-         if (currentKeyFrame >= spawner.keyFrameList.Count)
+{
+    
+    if (currentKeyFrame >= spawner.keyFrameList.Count)
     {
         // Check if there are more sections left in the level to test
         if (spawner.levelEditor.currentSection + 1 < spawner.currentLevel.keyframeIndicesSections.Count)
         {
+            
             // Move to the next section
             spawner.levelEditor.switchToNextSection();
 
             // Reset the keyframe counter for the new section
             currentKeyFrame = 0;
+
+            // Ensure all keyframes are initially deactivated
+            DeactivateAllKeyframePlayers();
 
             // Start testing the next section
             startTestTrace();
@@ -158,49 +163,94 @@ public class TraceChecker
         return;
     }
 
-        // Perform the limb check
-        if (CheckAllLimbsAtKeyPoint(currentKeyFrame))
-        {
-            // If all limbs are close enough, disable the keyframe player's body parts parent GameObject
-            spawner.keyFrameList[currentKeyFrame].keyFramePlayer.bodyPartsParent.SetActive(false);
-            Debug.Log($"Keyframe {currentKeyFrame} passed the trace check.");
-            currentKeyFrame++;
-            //play success sound
-        }
-       
+    // Deactivate all keyframe players before checking the current one
 
-         // Move to the next keyframe for the next update
+    // Ensure the current keyframe's player model is visible
+    if(spawner.keyFrameList.Count > currentKeyFrame) // Additional check to ensure index is in range
+    {
+        DeactivateAllKeyframePlayers();
+
+        spawner.keyFrameList[currentKeyFrame].keyFramePlayer.bodyPartsParent.SetActive(true);
     }
 
-    private bool CheckAllLimbsAtKeyPoint(int keyPointIndex)
+    // Perform the limb check
+    if (CheckAllLimbsAtKeyPoint(currentKeyFrame))
     {
-        // Assuming the existence of a method to fetch the current player state for comparison
-        // and that both keyFramePlayer and PlayerToRecord have their limbs stored in a similar dictionary structure for direct comparison
+        Debug.Log($"Keyframe {currentKeyFrame} passed the trace check.");
+        spawner.keyFrameList[currentKeyFrame].keyFramePlayer.bodyPartsParent.SetActive(false);
 
-        var keyFramePlayer = spawner.keyFrameList[keyPointIndex].keyFramePlayer;
-        var playerToRecord = spawner.recorder.PlayerToRecord; // Assuming this is accessible
+        currentKeyFrame++;
+       
+    spawner.keyFrameList[currentKeyFrame].keyFramePlayer.bodyPartsParent.SetActive(true);
 
-        foreach (var limbName in keyFramePlayer.bodyPartsDictionary.Keys)
+        // Optionally, play success sound here
+    }
+
+    // Optionally, you might want to deactivate the current keyframe player immediately or after some delay
+    // For immediate deactivation (comment out if you want to keep it visible until the next update):
+     
+}
+
+private void DeactivateAllKeyframePlayers()
+{
+    foreach (var keyFrame in spawner.keyFrameList)
+    {
+        if(keyFrame.keyFramePlayer.bodyPartsParent != null) // Check if the bodyPartsParent is set
         {
-            // Fetch corresponding Transforms to be checked
-            Transform keyFrameLimbTransform = keyFramePlayer.bodyPartsDictionary[limbName].transform;
-            Transform recordLimbTransform = playerToRecord.bodyPartsDictionary[limbName].transform;
+            keyFrame.keyFramePlayer.bodyPartsParent.SetActive(false);
+        }
+    }
+}
 
-            // Use some predefined tolerances or calculate them based on your needs
-            Vector3 positionTolerance = new Vector3(0.1f, 0.1f, 0.1f);
-            float rotationToleranceDegrees = 5f;
+   private bool CheckAllLimbsAtKeyPoint(int keyPointIndex)
+{
+    bool allLimbsCloseEnough = true;
 
-            if (!closeEnough(keyFrameLimbTransform, recordLimbTransform, positionTolerance, rotationToleranceDegrees))
+    var keyFramePlayer = spawner.keyFrameList[keyPointIndex].keyFramePlayer;
+    var playerToRecord = spawner.recorder.PlayerToRecord;
+
+    // Iterate through the playerToRecord's limbs since you want to change these colors
+    foreach (var limbName in playerToRecord.bodyPartsDictionary.Keys)
+    {
+        if (!keyFramePlayer.bodyPartsDictionary.ContainsKey(limbName))
+        {
+            Debug.LogWarning($"Limb {limbName} not found in keyFramePlayer's bodyPartsDictionary.");
+            continue; // Skip this iteration if the limb doesn't exist in keyFramePlayer
+        }
+
+        // Fetch corresponding Transforms to be checked
+        Transform recordLimbTransform = playerToRecord.bodyPartsDictionary[limbName].transform;
+        Transform keyFrameLimbTransform = keyFramePlayer.bodyPartsDictionary[limbName].transform;
+
+        Renderer limbRenderer = playerToRecord.bodyPartsDictionary[limbName].GetComponent<Renderer>();
+
+        // Use some predefined tolerances or calculate them based on your needs
+        Vector3 positionTolerance = new Vector3(0.5f, 0.5f, 0.5f);
+        float rotationToleranceDegrees = 15f;
+
+        if (!closeEnough(recordLimbTransform, keyFrameLimbTransform, positionTolerance, rotationToleranceDegrees))
+        {
+            // If not close enough, turn the limb red in playerToRecord
+            if (limbRenderer != null)
             {
-                Debug.Log(limbName);
-                return false; // If any limb is not close enough, return false immediately
+                limbRenderer.material.color = Color.red;
+            }
+            allLimbsCloseEnough = false; // At least one limb is not close enough
+        }
+        else
+        {
+            // If close enough, turn the limb green in playerToRecord
+            if (limbRenderer != null)
+            {
+                limbRenderer.material.color = Color.green;
             }
         }
-
-        // If all limbs are close enough
-         Debug.Log("all good");
-        return true;
     }
+
+    return allLimbsCloseEnough;
+}
+
+
 
     public bool closeEnough(Transform reference, Transform toBeChecked, Vector3 positionTolerance, float rotToleranceDegrees)
     {
