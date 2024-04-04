@@ -49,7 +49,7 @@ public class Recorder : MonoBehaviour
         currentUpdate = PlayFrame;
     }
 
-    private void RecordFrame()
+    public void RecordFrame()
     {
         var frame = new Frame();
         frame.CapturePlayerState(PlayerToRecord);
