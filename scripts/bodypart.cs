@@ -372,11 +372,27 @@ public class player
     // Update methods for before and after calibration
     private void PreCalibrationUpdate()
     {
+        Hip.shoulderL.radius = Hip.shoulderR.radius = Vector3.Distance(kneeConL.position,kneeConR.position)/2f;
+        Chest.shoulderL.radius = Chest.shoulderR.radius = Vector3.Distance(conL.position,conR.position)/2f;
+
+        Hip.shoulderR.elbow.radius =  (Hip.shoulderR.bp.transform.position.y - kneeConR.position.y)*.9f;
+        Hip.shoulderL.elbow.radius =  (Hip.shoulderL.bp.transform.position.y - kneeConL.position.y)*.9f;
+
+        Chest.shoulderR.elbow.radius =  (Chest.shoulderR.bp.transform.position.y - conR.position.y)*.9f;
+        Chest.shoulderL.elbow.radius =  (Chest.shoulderL.bp.transform.position.y - conL.position.y)*.9f;
+
         Hip.shoulderR.hand.radius = Hip.shoulderR.elbow.bp.transform.position.y;
         Hip.shoulderL.hand.radius = Hip.shoulderL.elbow.bp.transform.position.y;
+
+        Chest.shoulderR.hand.radius = Chest.shoulderR.elbow.radius;
+        Chest.shoulderL.hand.radius = Chest.shoulderL.elbow.radius;
+        
+
+
         playerTorso.resize();
         if (isLookingUp()) Calibrate();
     }
+
 
     private void PostCalibrationUpdate()
     {
