@@ -134,7 +134,7 @@ public class elbow : bodypart
     public elbow(string name, Transform Shoul, Transform Con)
     {
         bp = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-        bp.transform.localScale = new Vector3(.1f, .1f, .1f);
+        bp.transform.localScale = new Vector3(.1f,.1f, .1f);
         bp.name = name;
         tricep = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
         tricep.transform.localScale = new Vector3(.13f, .35f*radius, .13f);
@@ -159,10 +159,10 @@ public class hand : bodypart
 {
     Transform elbow;
     public GameObject forearm;
-    public float radius = .3f;
+    public float radius = .23f;
     public delegate void UpdateDelegate();
-    private UpdateDelegate currentUpdate;
-
+    public UpdateDelegate currentUpdate;
+    public Vector3 hmdDirection;
     // Constructor for hand
     public hand(string name, Transform Elbow)
     {
@@ -170,15 +170,17 @@ public class hand : bodypart
         bp.transform.localScale = new Vector3(.1f, .1f, .1f);
         bp.name = name;
         forearm = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-        forearm.transform.localScale = new Vector3(.1f, .09f, .1f);
+        forearm.transform.localScale = new Vector3(.1f, radius*.35f, .1f);
         elbow = Elbow;
         currentUpdate = PreCalibrationUpdate;
     }
-
+    public void resizeForearm()
+    {
+        forearm.transform.localScale = new Vector3(.1f, radius*.8f, .1f);
+    }
     // Method to calibrate the hand position
     public void Calibrate()
     {
-        this.bp.transform.localPosition = elbow.localPosition + Vector3.down * radius;
         this.bp.transform.SetParent(elbow);
         currentUpdate = PostCalibrationUpdate;
     }
@@ -186,11 +188,18 @@ public class hand : bodypart
     // Update methods for before and after calibration
     private void PreCalibrationUpdate()
     {
+       Vector3 hmdDirectionXZ = new Vector3(hmdDirection.x, 0, hmdDirection.z); // Project onto XZ plane by setting y to 0
+        this.bp.transform.localPosition = elbow.localPosition + hmdDirectionXZ.normalized * radius; 
+
+        SetBetweenJoints(joint1: elbow.position, joint2: this.bp.transform.position, cyl: forearm);
+    }
+    public void HipPreCalibrationUpdate()
+    {
         this.bp.transform.localPosition = elbow.localPosition + Vector3.down * radius;
         SetBetweenJoints(joint1: elbow.position, joint2: this.bp.transform.position, cyl: forearm);
     }
 
-    private void PostCalibrationUpdate()
+    public void PostCalibrationUpdate()
     {
         SetBetweenJoints(joint1: elbow.position, joint2: this.bp.transform.position, cyl: forearm);
     }
@@ -273,16 +282,21 @@ public class player
         Chest = new chest("chest", hmd, conR, conL);
         Hip = new chest("hip", hmd, kneeConR, kneeConL);
         Hip.biasCounter = 1;
-        Hip.shoulderR.elbow.radius = .35f;
-        Hip.shoulderL.elbow.radius = .35f;
-        Hip.shoulderR.radius = .1f; 
-        Hip.shoulderL.radius = .1f;
-        Hip.shoulderR.hand.radius = .35f; 
-        Hip.shoulderL.hand.radius = .35f;
+        //Hip.shoulderR.elbow.radius = .2f;
+        //Hip.shoulderL.elbow.radius = .2f;
+        Hip.shoulderR.radius = .18f; 
+        Hip.shoulderL.radius = .18f;
+        Hip.shoulderR.hand.radius = .3f; 
+        Hip.shoulderL.hand.radius = .3f;
+        Hip.shoulderL.hand.resizeForearm();
+        Hip.shoulderR.hand.resizeForearm();
         currentUpdate = PreCalibrationUpdate; 
+        Hip.shoulderR.hand.currentUpdate =  Hip.shoulderR.hand.HipPreCalibrationUpdate;
+        Hip.shoulderL.hand.currentUpdate = Hip.shoulderL.hand.HipPreCalibrationUpdate;
         bodyPartsParent = new GameObject("BodyPartsParent");
         playerTorso = new Torso("playerTorso", Hmd, Chest.bp.transform, Hip.bp.transform, bodyPartsParent);
         bodyPartsDictionary = new Dictionary<string, GameObject>();
+        testPartsDictionary = new Dictionary<string, GameObject>();
         PopulateBodyPartsDictionary();
         InitializeBodyPartsParent();
 
@@ -309,7 +323,7 @@ public class player
     {
         // Main body parts
         //bodyPartsDictionary.Add("HMD", hmd.gameObject);
-        bodyPartsDictionary.Add("Chest", Chest.bp);
+        //bodyPartsDictionary.Add("Chest", Chest.bp);
         bodyPartsDictionary.Add("Hip", Hip.bp);
     //bodyPartsDictionary.Add("UpperTorso", playerTorso.upperTorso); // Added upper torso
     //bodyPartsDictionary.Add("LowerTorso", playerTorso.lowerTorso); 
@@ -321,14 +335,28 @@ public class player
     }
 
     // Helper method to add body parts to the dictionary with a prefix, now mapping to GameObjects
+    private void AddTestPartsDictionary(chest chestPart, string prefix)
+    {
+        
+        testPartsDictionary.Add(prefix + "ShoulderR", chestPart.shoulderR.bp);
+        testPartsDictionary.Add(prefix + "ShoulderL", chestPart.shoulderL.bp);
+        testPartsDictionary.Add(prefix + "ElbowR", chestPart.shoulderR.elbow.bp);
+        testPartsDictionary.Add(prefix + "ElbowL", chestPart.shoulderL.elbow.bp);
+       // testPartsDictionary.Add(prefix + "HandR", chestPart.shoulderR.hand.bp);
+        //testPartsDictionary.Add(prefix + "HandL", chestPart.shoulderL.hand.bp);
+        testPartsDictionary.Add(prefix + "TricepR", chestPart.shoulderR.elbow.tricep);
+        testPartsDictionary.Add(prefix + "TricepL", chestPart.shoulderL.elbow.tricep);
+        testPartsDictionary.Add(prefix + "ForearmR", chestPart.shoulderR.hand.forearm);
+        testPartsDictionary.Add(prefix + "ForearmL", chestPart.shoulderL.hand.forearm);
+    }
     private void AddBodyPartToDictionary(chest chestPart, string prefix)
     {
         bodyPartsDictionary.Add(prefix + "ShoulderR", chestPart.shoulderR.bp);
         bodyPartsDictionary.Add(prefix + "ShoulderL", chestPart.shoulderL.bp);
         bodyPartsDictionary.Add(prefix + "ElbowR", chestPart.shoulderR.elbow.bp);
         bodyPartsDictionary.Add(prefix + "ElbowL", chestPart.shoulderL.elbow.bp);
-        bodyPartsDictionary.Add(prefix + "HandR", chestPart.shoulderR.hand.bp);
-        bodyPartsDictionary.Add(prefix + "HandL", chestPart.shoulderL.hand.bp);
+       // bodyPartsDictionary.Add(prefix + "HandR", chestPart.shoulderR.hand.bp);
+        //bodyPartsDictionary.Add(prefix + "HandL", chestPart.shoulderL.hand.bp);
         bodyPartsDictionary.Add(prefix + "TricepR", chestPart.shoulderR.elbow.tricep);
         bodyPartsDictionary.Add(prefix + "TricepL", chestPart.shoulderL.elbow.tricep);
         bodyPartsDictionary.Add(prefix + "ForearmR", chestPart.shoulderR.hand.forearm);
@@ -372,14 +400,14 @@ public class player
     // Update methods for before and after calibration
     private void PreCalibrationUpdate()
     {
-        Hip.shoulderL.radius = Hip.shoulderR.radius = Vector3.Distance(kneeConL.position,kneeConR.position)/2f;
-        Chest.shoulderL.radius = Chest.shoulderR.radius = Vector3.Distance(conL.position,conR.position)/2f;
+        Hip.shoulderL.radius = Hip.shoulderR.radius = Vector3.Distance(kneeConL.position,kneeConR.position)/4f;
+        Chest.shoulderL.radius = Chest.shoulderR.radius = Vector3.Distance(conL.position,conR.position)/4f;
 
-        Hip.shoulderR.elbow.radius =  (Hip.shoulderR.bp.transform.position.y - kneeConR.position.y)*.9f;
-        Hip.shoulderL.elbow.radius =  (Hip.shoulderL.bp.transform.position.y - kneeConL.position.y)*.9f;
+        Hip.shoulderR.elbow.radius =  (Hip.shoulderR.bp.transform.position.y - kneeConR.position.y)*.6f;
+        Hip.shoulderL.elbow.radius =  (Hip.shoulderL.bp.transform.position.y - kneeConL.position.y)*.6f;
 
-        Chest.shoulderR.elbow.radius =  (Chest.shoulderR.bp.transform.position.y - conR.position.y)*.9f;
-        Chest.shoulderL.elbow.radius =  (Chest.shoulderL.bp.transform.position.y - conL.position.y)*.9f;
+        Chest.shoulderR.elbow.radius =  (Chest.shoulderR.bp.transform.position.y - conR.position.y)*.6f;
+        Chest.shoulderL.elbow.radius =  (Chest.shoulderL.bp.transform.position.y - conL.position.y)*.6f;
 
         Hip.shoulderR.hand.radius = Hip.shoulderR.elbow.bp.transform.position.y;
         Hip.shoulderL.hand.radius = Hip.shoulderL.elbow.bp.transform.position.y;
@@ -387,12 +415,11 @@ public class player
         Chest.shoulderR.hand.radius = Chest.shoulderR.elbow.radius;
         Chest.shoulderL.hand.radius = Chest.shoulderL.elbow.radius;
         
-
+        Chest.shoulderR.hand.hmdDirection = Chest.shoulderL.hand.hmdDirection = hmd.forward;
 
         playerTorso.resize();
         if (isLookingUp()) Calibrate();
     }
-
 
     private void PostCalibrationUpdate()
     {
@@ -411,6 +438,7 @@ public class player
     {
         
     }
+    
     // Check if the player is looking up
     public bool isLookingUp()
     {
