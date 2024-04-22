@@ -202,14 +202,14 @@ private void DeactivateAllKeyframePlayers()
     }
 }
 
-   private bool CheckAllLimbsAtKeyPoint(int keyPointIndex)
+  private bool CheckAllLimbsAtKeyPoint(int keyPointIndex)
 {
     bool allLimbsCloseEnough = true;
 
     var keyFramePlayer = spawner.keyFrameList[keyPointIndex].keyFramePlayer;
     var playerToRecord = spawner.recorder.PlayerToRecord;
 
-    // Iterate through the playerToRecord's limbs since you want to change these colors
+    // Iterate through the playerToRecord's limbs
     foreach (var limbName in playerToRecord.bodyPartsDictionary.Keys)
     {
         if (!keyFramePlayer.bodyPartsDictionary.ContainsKey(limbName))
@@ -222,7 +222,8 @@ private void DeactivateAllKeyframePlayers()
         Transform recordLimbTransform = playerToRecord.bodyPartsDictionary[limbName].transform;
         Transform keyFrameLimbTransform = keyFramePlayer.bodyPartsDictionary[limbName].transform;
 
-        Renderer limbRenderer = playerToRecord.bodyPartsDictionary[limbName].GetComponent<Renderer>();
+        Renderer recordLimbRenderer = playerToRecord.bodyPartsDictionary[limbName].GetComponent<Renderer>();
+        Renderer keyFrameLimbRenderer = keyFramePlayer.bodyPartsDictionary[limbName].GetComponent<Renderer>();
 
         // Use some predefined tolerances or calculate them based on your needs
         Vector3 positionTolerance = new Vector3(0.5f, 0.5f, 0.5f);
@@ -230,19 +231,27 @@ private void DeactivateAllKeyframePlayers()
 
         if (!closeEnough(recordLimbTransform, keyFrameLimbTransform, positionTolerance, rotationToleranceDegrees))
         {
-            // If not close enough, turn the limb red in playerToRecord
-            if (limbRenderer != null)
+            // If not close enough, turn both limbs red and keyFramePlayer transparent
+            if (recordLimbRenderer != null)
             {
-                limbRenderer.material.color = Color.red;
+                recordLimbRenderer.material.color = Color.red;
+            }
+            if (keyFrameLimbRenderer != null)
+            {
+                keyFrameLimbRenderer.material.color = new Color(1, 0, 0, 0.5f); // Red with 50% transparency
             }
             allLimbsCloseEnough = false; // At least one limb is not close enough
         }
         else
         {
-            // If close enough, turn the limb green in playerToRecord
-            if (limbRenderer != null)
+            // If close enough, turn both limbs green and keyFramePlayer transparent
+            if (recordLimbRenderer != null)
             {
-                limbRenderer.material.color = Color.green;
+                recordLimbRenderer.material.color = Color.green;
+            }
+            if (keyFrameLimbRenderer != null)
+            {
+                keyFrameLimbRenderer.material.color = new Color(0, 1, 0, 0.5f); // Green with 50% transparency
             }
         }
     }
