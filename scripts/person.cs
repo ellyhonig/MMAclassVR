@@ -24,6 +24,7 @@ public class person : MonoBehaviour
         player1 = new player(hmd.transform, conR.transform, conL.transform, kneeConR.transform, kneeConL.transform);
         mirroredPlayer = new MirroredPlayer(hmd, conR, conL, kneeConR, kneeConL);
         
+        
     }
 
     void Update()
@@ -31,14 +32,7 @@ public class person : MonoBehaviour
         player1.updater();
         //mirroredPlayer.UpdateMirroredPlayer();
         //mirroredPlayer.updateTransforms?.Invoke(hmd.transform, conR.transform, conL.transform, kneeConR.transform, kneeConL.transform);
-        player1.Chest.shoulderR.elbow.radius= elbowRad;
-        player1.Chest.shoulderL.elbow.radius = elbowRad;
-        player1.Chest.shoulderR.hand.radius= handRad;
-        player1.Chest.shoulderL.hand.radius = handRad;
-        player1.Hip.shoulderR.elbow.radius= kneeRad;
-        player1.Hip.shoulderL.elbow.radius = kneeRad;
-        player1.Hip.shoulderR.hand.radius= footRad;
-        player1.Hip.shoulderL.hand.radius = footRad;
+       
 
     }
 }
